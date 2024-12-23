@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foto Kamera</title>
+    <script>
+        // Redirect function
+        function redirectTo(url) {
+            window.location.href = url;
+        }
+
+        // Example edge function for demonstration (simulated in client-side JavaScript)
+        function edgeFunction() {
+            const timestamp = new Date().toISOString();
+            return `Edge function executed at: ${timestamp}`;
+        }
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Ambil Foto dengan Kamera</h1>
+        <nav>
+            <button onclick="redirectTo('https://example.com')">Go to Example</button>
+        </nav>
+    </header>
+    <video id="video" autoplay playsinline style="width: 100%; max-width: 400px;"></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <br>
+    <button id="capture">FOTO</button>
+    <a id="download" style="display: none;">Download Foto</a>
+
+    <footer>
+        <p id="edge-function-result">Edge Function Result: Not Executed</p>
+        <button onclick="document.getElementById('edge-function-result').textContent = edgeFunction();">
+            Execute Edge Function
+        </button>
+    </footer>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureButton = document.getElementById('capture');
+        const downloadLink = document.getElementById('download');
+
+        // Mengakses kamera depan
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(error => {
+                console.error('Error accessing camera:', error);
+                alert('Kamera tidak bisa diakses. Pastikan izin kamera diaktifkan.');
+            });
+
+        captureButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Menggambar video ke canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Mengubah canvas menjadi gambar
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                downloadLink.href = url;
+                downloadLink.download = 'foto_kamera.png';
+                downloadLink.style.display = 'inline';
+                downloadLink.textContent = 'Download Foto';
+            });
+        });
+    </script>
+</body>
+</html>
