@@ -58,25 +58,30 @@
     </style>
     <script>
         let currentFacingMode = 'user';
-        const video = document.getElementById('video');
 
         // Function to start camera with specific facing mode
         function startCamera(facingMode) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode } })
-                .then(stream => {
-                    video.srcObject = stream;
-                })
-                .catch(error => {
-                    console.error('Error accessing camera:', error);
-                    // Menambahkan tampilan kesalahan yang lebih rinci
-                    if (error.name === 'NotAllowedError') {
-                        alert('Izin kamera belum diberikan. Harap izinkan akses kamera di pengaturan browser.');
-                    } else if (error.name === 'NotFoundError') {
-                        alert('Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.');
-                    } else {
-                        alert('Kamera tidak bisa diakses. Error: ' + error.message);
-                    }
-                });
+            const video = document.getElementById('video');
+            // Pastikan elemen video ada sebelum mengaksesnya
+            if (video) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode } })
+                    .then(stream => {
+                        video.srcObject = stream;
+                    })
+                    .catch(error => {
+                        console.error('Error accessing camera:', error);
+                        // Menambahkan tampilan kesalahan yang lebih rinci
+                        if (error.name === 'NotAllowedError') {
+                            alert('Izin kamera belum diberikan. Harap izinkan akses kamera di pengaturan browser.');
+                        } else if (error.name === 'NotFoundError') {
+                            alert('Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.');
+                        } else {
+                            alert('Kamera tidak bisa diakses. Error: ' + error.message);
+                        }
+                    });
+            } else {
+                console.error('Element video tidak ditemukan.');
+            }
         }
 
         // Toggle camera between front and back
@@ -105,11 +110,12 @@
             const canvas = document.getElementById('canvas');
             const captureButton = document.getElementById('capture');
 
-            // Menambahkan pengecekan untuk memastikan bahwa kamera sudah bisa diakses
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            // Pastikan elemen video sudah ada sebelum memulai kamera
+            const video = document.getElementById('video');
+            if (video) {
                 startCamera(currentFacingMode);
             } else {
-                alert('Fitur kamera tidak didukung oleh browser ini.');
+                alert('Elemen video tidak ditemukan!');
             }
 
             captureButton.addEventListener('click', () => {
