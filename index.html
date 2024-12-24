@@ -82,7 +82,13 @@
                 })
                 .catch(error => {
                     console.error('Error accessing camera:', error);
-                    alert('Kamera tidak bisa diakses. Pastikan izin kamera diaktifkan.');
+                    if (error.name === 'NotAllowedError') {
+                        alert('Kamera tidak diizinkan. Mohon aktifkan izin kamera di pengaturan browser Anda.');
+                    } else if (error.name === 'NotFoundError') {
+                        alert('Tidak ada perangkat kamera yang ditemukan.');
+                    } else {
+                        alert('Terjadi masalah saat mengakses kamera.');
+                    }
                 });
         }
 
